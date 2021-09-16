@@ -11,7 +11,8 @@ fullScreen = False
 # inputimage1 = cv2.imread("media/Img3/IMG_20200121_151233.jpg")
 # inputimage1 = cv2.imread("media/Img3/IMG_20200121_151240.jpg")
 # inputimage1 = cv2.imread("media/Img3/IMG_20200121_151252.jpg")
-inputimage1 = cv2.imread("media/Img1/IMG_20200120_140536.jpg")
+# inputimage1 = cv2.imread("media/Img1/IMG_20200120_140536.jpg")
+inputimage1 = cv2.imread("flowmeter.jpg")
 inputimage1 = cv2.resize(inputimage1, (width,height))
 number = 0
 def pointColor(n):
@@ -47,11 +48,11 @@ while True:
   width2 = int(height*(x2-x1)/(y2-y1))
   if width2 > width: width2 = width
   #}}}
-  #Gera Imagem {{{
+  # Generate Image {{{
   image = np.zeros((height, width+width2, 3), np.uint8)
   image[:] = (0,0,0)
   #}}}
-  # Perspectiva {{{
+  # Perspective {{{
   fatia = np.zeros((height, width2, 3), np.uint8)
   pts1 = np.float32([[0,0],[width2,0],[width2,height],[0,height]])
   color = 0
@@ -60,7 +61,7 @@ while True:
   fatia_copy = fatia.copy()
   gray = cv2.cvtColor(fatia_copy, cv2.COLOR_BGR2GRAY)
   #}}}
-  #Centro de massa {{{
+  #Center of mass {{{
   (thresh, circles_binary) = cv2.threshold(gray, 60, 255, cv2.THRESH_BINARY_INV)
   circles_openning = cv2.morphologyEx(circles_binary, cv2.MORPH_OPEN, np.ones((13,5)))
   M = cv2.moments(circles_openning)
@@ -68,7 +69,7 @@ while True:
   cY = int(M["m01"] / M["m00"]) if M["m01"] != M["m00"] else 0
 
   # }}}
-  #Lines {{{
+  # Lines {{{
   lines_sobel = cv2.Sobel(gray,cv2.CV_8U,0,2,ksize=5)
   lines_opening = cv2.morphologyEx(lines_sobel, cv2.MORPH_OPEN, np.ones((2,24)))
   (thresh, lines_binary) = cv2.threshold(lines_opening, 160, 255, cv2.THRESH_BINARY)
@@ -89,21 +90,21 @@ while True:
       lines_height += [(pt1[1]+pt2[1])/2]
     lines_height.sort(reverse=True)
   #}}}
-  #Encontra o numero {{{
+  # Find number {{{
   for LM in range(1, len(lines_height)):
     if cY <=lines_height[LM-1]  and cY > lines_height[LM]:
       decimal = (lines_height[LM-1] - cY)/(lines_height[LM-1] - lines_height[LM])
       number = round(LM+decimal, 3)
       print(number)
   #}}}
-  #Printa centro de massa {{{
+  # Print center of mass {{{
   cv2.circle(circles_openning, (cX, cY), 2, (0,0,255), -1)
   redImg = np.zeros(fatia_copy.shape, image.dtype)
   redImg[:] = (255, 255, 0)
   redMask = cv2.bitwise_and(redImg, redImg, mask=circles_openning)
   cv2.addWeighted(redMask, 1, fatia_copy, 1, 0, fatia_copy)
   #}}}
-  #Printa o numero {{{
+  # Print number {{{
   if number > 0:
     cv2.putText(inputimage1_copy, str(number), (25, 45),cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 1)
   #}}}
@@ -111,13 +112,13 @@ while True:
   image[0:height,0:width] = inputimage1_copy
   image[0:height,width:width+width2] = fatia_copy
   #}}}
-  # Printa Pontos de Referencia
+  # Reference points
   for point in referencePoints:
     cv2.circle(image, (int(point[0]), int(point[1])),5,pointColor(color), -1)
     color += 1
   cv2.imshow("test", image)
   # }}}
-  #Teclas do teclado
+  # Keyboard
   key = cv2.waitKey(1) & 0xFF
   if key == ord("f"):
     cv2.setWindowProperty("test", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL if fullScreen else cv2.WINDOW_FULLSCREEN)
